@@ -1042,7 +1042,7 @@ module.exports = {
     'history-v1',
     'launchpad',
     'server-ce-scripts',
-    'user-activate',
+    'admin-panel',
   ],
   viewIncludes: {},
 
