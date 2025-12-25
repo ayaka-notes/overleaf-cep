@@ -155,6 +155,7 @@ async function getSnapshot(req, res, next) {
     const snapshot = Snapshot.fromRaw(snapshotRaw)
 
     // Build response in git-bridge format
+    // Note: srcs and atts are arrays of arrays: [[content, path], [content, path], ...]
     const srcs = []
     const atts = []
 
@@ -162,23 +163,17 @@ async function getSnapshot(req, res, next) {
     const files = snapshot.getFileMap()
     for (const [pathname, file] of files) {
       if (file.isEditable()) {
-        // Text file - include content directly
-        srcs.push({
-          content: file.getContent(),
-          path: pathname,
-        })
+        // Text file - include content directly as [content, path] array
+        srcs.push([file.getContent(), pathname])
       } else {
-        // Binary file - provide URL to download
+        // Binary file - provide URL to download as [url, path] array
         const hash = file.getHash()
         const historyId = await HistoryManager.promises.getHistoryId(projectId)
         
         // Build URL to blob endpoint
         const blobUrl = `${settings.siteUrl}/project/${projectId}/blob/${hash}`
         
-        atts.push({
-          url: blobUrl,
-          path: pathname,
-        })
+        atts.push([blobUrl, pathname])
       }
     }
 
