@@ -103,9 +103,19 @@ async function getSavedVers(req, res, next) {
     }
 
     // Get labels from project-history service
-    let labels = await fetchJson(
-      `${settings.apis.project_history.url}/project/${projectId}/labels`
-    )
+    let labels
+    try {
+      labels = await fetchJson(
+        `${settings.apis.project_history.url}/project/${projectId}/labels`
+      )
+    } catch (err) {
+      // If no labels exist, return empty array
+      if (err.response?.status === 404) {
+        labels = []
+      } else {
+        throw err
+      }
+    }
 
     // Enrich labels with user information
     labels = await enrichLabels(labels)
@@ -168,9 +178,8 @@ async function getSnapshot(req, res, next) {
       } else {
         // Binary file - provide URL to download as [url, path] array
         const hash = file.getHash()
-        const historyId = await HistoryManager.promises.getHistoryId(projectId)
         
-        // Build URL to blob endpoint
+        // Build URL to blob endpoint (already exists in web service)
         const blobUrl = `${settings.siteUrl}/project/${projectId}/blob/${hash}`
         
         atts.push([blobUrl, pathname])
