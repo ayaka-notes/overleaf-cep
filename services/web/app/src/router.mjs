@@ -55,6 +55,7 @@ import LinkedFilesRouter from './Features/LinkedFiles/LinkedFilesRouter.mjs'
 import TemplatesRouter from './Features/Templates/TemplatesRouter.mjs'
 import UserMembershipRouter from './Features/UserMembership/UserMembershipRouter.mjs'
 import SystemMessageController from './Features/SystemMessages/SystemMessageController.mjs'
+import GitBridgeApiController from './Features/GitBridge/GitBridgeApiController.mjs'
 import AnalyticsRegistrationSourceMiddleware from './Features/Analytics/AnalyticsRegistrationSourceMiddleware.mjs'
 import AnalyticsUTMTrackingMiddleware from './Features/Analytics/AnalyticsUTMTrackingMiddleware.mjs'
 import CaptchaMiddleware from './Features/Captcha/CaptchaMiddleware.mjs'
@@ -1134,6 +1135,28 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
 
   publicApiRouter.get('/health_check/mongo', HealthCheckController.checkMongo)
   privateApiRouter.get('/health_check/mongo', HealthCheckController.checkMongo)
+
+  // Git Bridge API v0 endpoints
+  publicApiRouter.get(
+    '/v0/docs/:project_id',
+    AuthorizationMiddleware.ensureUserCanReadProject,
+    GitBridgeApiController.getDoc
+  )
+  publicApiRouter.get(
+    '/v0/docs/:project_id/saved_vers',
+    AuthorizationMiddleware.ensureUserCanReadProject,
+    GitBridgeApiController.getSavedVers
+  )
+  publicApiRouter.get(
+    '/v0/docs/:project_id/snapshots/:version',
+    AuthorizationMiddleware.ensureUserCanReadProject,
+    GitBridgeApiController.getSnapshot
+  )
+  publicApiRouter.post(
+    '/v0/docs/:project_id/snapshots',
+    AuthorizationMiddleware.ensureUserCanWriteProjectContent,
+    GitBridgeApiController.postSnapshot
+  )
 
   webRouter.get(
     '/status/compiler/:Project_id',
