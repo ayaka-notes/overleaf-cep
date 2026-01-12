@@ -81,9 +81,9 @@ Returns the snapshot (file contents) for a specific version.
 
 Receives push requests from git-bridge with file changes.
 
-**Status:** Not yet fully implemented (returns 501)
+**Status:** ✅ Fully implemented
 
-**Expected Request Format:**
+**Request Format:**
 ```json
 {
   "latestVerId": 123,
@@ -91,17 +91,66 @@ Receives push requests from git-bridge with file changes.
     {
       "name": "path/to/file.tex",
       "url": "http://example.com/download/file"
+    },
+    {
+      "name": "unchanged.tex"
     }
   ],
   "postbackUrl": "http://git-bridge/postback"
 }
 ```
 
-**TODO:**
-- Implement version validation
-- Process file downloads from URLs
-- Update project with new content
-- Implement postback mechanism
+**Response (Immediate):**
+- 202 Accepted: Push accepted and being processed
+- 409 Conflict: Version is out of date (latestVerId doesn't match current version)
+- 404 Not Found: Project not found
+
+**Postback Data (Async):**
+On success:
+```json
+{
+  "code": "upToDate",
+  "latestVerId": 124
+}
+```
+
+On version conflict:
+```json
+{
+  "code": "outOfDate",
+  "message": "Out of Date"
+}
+```
+
+On invalid files:
+```json
+{
+  "code": "invalidFiles",
+  "errors": [
+    {
+      "file": "invalid/../../file.tex",
+      "state": "error"
+    }
+  ]
+}
+```
+
+On unexpected error:
+```json
+{
+  "code": "error",
+  "message": "Unexpected Error"
+}
+```
+
+**Implementation Details:**
+- Validates latestVerId against current project version
+- Downloads files from provided URLs
+- Determines file type (doc vs binary) automatically
+- Updates/creates files using EditorController
+- Deletes files not present in new snapshot
+- Sends postback notification with results
+- Processes asynchronously after accepting request
 
 ## Security
 
@@ -111,24 +160,30 @@ All endpoints are protected with authorization middleware:
 
 ## Error Handling
 
+- 202: Push accepted (POST endpoint)
 - 404: Project not found or version not found
 - 403: User does not have permission
+- 409: Version conflict (POST endpoint)
 - 500: Internal server error (logged with context)
 
 ## Testing
 
-Manual testing can be done by:
+Testing can be done by:
 1. Starting the web service
-2. Using git-bridge to clone a project
+2. Using git-bridge to:
+   - Clone a project (tests GET endpoints)
+   - Make changes and push (tests POST endpoint)
 3. Verifying the API endpoints return correct data
+4. Checking logs for postback notifications
 
 ## Future Improvements
 
-1. **Complete POST implementation**: Implement the full push mechanism
-2. **Add unit tests**: Create comprehensive unit tests for all endpoints
+1. **Add unit tests**: Create comprehensive unit tests for all endpoints
+2. **Add integration tests**: Test with actual git-bridge service
 3. **Performance optimization**: Consider caching for frequently accessed snapshots
 4. **Rate limiting**: Add specific rate limiters for git-bridge endpoints
 5. **Metrics**: Add prometheus metrics for API usage
+6. **Enhanced validation**: Add more sophisticated file name validation
 
 ## References
 

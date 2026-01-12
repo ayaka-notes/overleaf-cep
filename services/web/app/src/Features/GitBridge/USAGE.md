@@ -117,27 +117,100 @@ curl -X GET "http://localhost:3000/api/v0/docs/507f1f77bcf86cd799439011/snapshot
 - `srcs` contains text files as `[content, path]` arrays
 - `atts` contains binary files as `[url, path]` arrays where the URL can be used to download the file
 
-### 4. Push Snapshot (Not Yet Implemented)
+### 4. Push Snapshot
 
 **Endpoint:** `POST /api/v0/docs/:project_id/snapshots`
 
-**Status:** Returns 501 Not Implemented
+**Status:** ✅ Fully Implemented
 
-**Expected Request:**
+**Description:** Pushes file changes from git repository to Overleaf project.
+
+**Request:**
+```bash
+curl -X POST "http://localhost:3000/api/v0/docs/507f1f77bcf86cd799439011/snapshots" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "latestVerId": 243,
+    "files": [
+      {
+        "name": "main.tex",
+        "url": "http://git-bridge/files/abc123"
+      },
+      {
+        "name": "chapters/chapter1.tex"
+      }
+    ],
+    "postbackUrl": "http://git-bridge/postback/xyz"
+  }'
+```
+
+**Immediate Response (202 Accepted):**
 ```json
 {
-  "latestVerId": 243,
-  "files": [
-    {
-      "name": "main.tex",
-      "url": "http://git-bridge/files/abc123"
-    }
-  ],
-  "postbackUrl": "http://git-bridge/postback/xyz"
+  "status": 202,
+  "code": "accepted",
+  "message": "Accepted"
 }
 ```
 
+**Immediate Response (409 Conflict - Version Out of Date):**
+```json
+{
+  "status": 409,
+  "code": "outOfDate",
+  "message": "Out of Date"
+}
+```
+
+**Postback Response (Success - sent to postbackUrl):**
+```json
+{
+  "code": "upToDate",
+  "latestVerId": 244
+}
+```
+
+**Postback Response (Invalid Files):**
+```json
+{
+  "code": "invalidFiles",
+  "errors": [
+    {
+      "file": "invalid/../file.tex",
+      "state": "error"
+    }
+  ]
+}
+```
+
+**Postback Response (Error):**
+```json
+{
+  "code": "error",
+  "message": "Unexpected Error"
+}
+```
+
+**How it works:**
+1. Request is validated immediately
+2. If latestVerId matches current version, returns 202 Accepted
+3. Files are processed asynchronously:
+   - Downloads files from URLs if provided
+   - Creates/updates files in the project
+   - Deletes files not present in the new snapshot
+4. Results are posted back to postbackUrl
+
 ## Error Responses
+
+### 202 Accepted (POST endpoint)
+```json
+{
+  "status": 202,
+  "code": "accepted",
+  "message": "Accepted"
+}
+```
 
 ### 404 Not Found
 ```json
@@ -159,12 +232,12 @@ or
 }
 ```
 
-### 501 Not Implemented (POST endpoint)
+### 409 Conflict (POST endpoint - version mismatch)
 ```json
 {
-  "status": 501,
-  "code": "notImplemented",
-  "message": "Snapshot push not yet implemented"
+  "status": 409,
+  "code": "outOfDate",
+  "message": "Out of Date"
 }
 ```
 
@@ -183,7 +256,16 @@ or
    git clone http://git-bridge-host:8000/project_id
    ```
 
-3. **Verify API Calls:**
+3. **Make Changes and Push:**
+   ```bash
+   cd project_id
+   echo "new content" >> main.tex
+   git add main.tex
+   git commit -m "Update main.tex"
+   git push
+   ```
+
+4. **Verify API Calls:**
    Monitor the web service logs to verify API calls are being made correctly:
    ```bash
    tail -f logs/web.log | grep "api/v0"
@@ -201,9 +283,19 @@ or
 - Ensure the user has appropriate permissions for the project
 - Check OAuth2 configuration if using token-based auth
 
+### "Out of Date" error (409 Conflict)
+- This occurs when the latestVerId in the push request doesn't match the current project version
+- Solution: Pull latest changes from Overleaf before pushing
+- Git-bridge handles this automatically by retrying the push
+
 ### Empty response for saved versions
 - This is normal if the project has no saved versions/labels
 - Users need to manually create labels through the Overleaf UI
+
+### Push not completing
+- Check the postback logs in git-bridge
+- Verify the postbackUrl is accessible from the web service
+- Check web service logs for errors during file processing
 
 ### Binary file URLs not working
 - Ensure the blob endpoint is accessible: `GET /project/:id/blob/:hash`
