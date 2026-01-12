@@ -322,7 +322,6 @@ logger.debug({ projectId, version }, 'Getting snapshot')
 
 ## Next Steps
 
-- Complete the POST endpoint implementation
 - Add comprehensive unit tests
 - Add integration tests with actual git-bridge
 - Implement rate limiting for git-bridge endpoints

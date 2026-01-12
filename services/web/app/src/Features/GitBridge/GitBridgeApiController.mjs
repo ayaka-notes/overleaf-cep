@@ -218,7 +218,8 @@ async function postSnapshot(req, res, next) {
   const { latestVerId, files, postbackUrl } = req.body
   
   // Use git-bridge user ID (system user) for operations
-  const userId = settings.gitBridgeUserId || null
+  // If not configured, operations will be performed as system user (null)
+  const userId = settings.gitBridgeUserId ?? null
 
   try {
     // Get project to verify it exists
@@ -433,9 +434,10 @@ async function processFileUpdate(projectId, filePath, fileUrl, userId) {
  * Download a file from URL to temporary location
  */
 async function downloadFile(projectId, url) {
-  const fsPath = `${
-    settings.path.dumpFolder
-  }/${projectId}_${crypto.randomUUID()}`
+  const fsPath = Path.join(
+    settings.path.dumpFolder,
+    `${projectId}_${crypto.randomUUID()}`
+  )
   
   const writeStream = fs.createWriteStream(fsPath)
   
@@ -489,7 +491,7 @@ async function determineFileType(projectId, path, fsPath) {
  */
 async function readFileIntoTextArray(fsPath) {
   let content = await fsPromises.readFile(fsPath, 'utf8')
-  if (content == null) {
+  if (content === null || content === undefined) {
     content = ''
   }
   const lines = content.split(/\r\n|\n|\r/)
