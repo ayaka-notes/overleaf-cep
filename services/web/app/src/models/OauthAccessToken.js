@@ -8,6 +8,7 @@ const OauthAccessTokenSchema = new Schema(
     accessToken: String,
     accessTokenPartial: String,
     type: String,
+    name: String,
     accessTokenExpiresAt: Date,
     oauthApplication_id: { type: ObjectId, ref: 'OauthApplication' },
     refreshToken: String,
