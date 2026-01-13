@@ -1063,6 +1063,7 @@ module.exports = {
     'authentication/oidc',
     'admin-panel', // import after authentication
     'template-gallery',
+    'oauth2-server', // OAuth2 server implementation
   ],
   viewIncludes: {},
 
