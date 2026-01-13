@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { db } from '../../../../app/src/infrastructure/mongodb.js'
+import { db, ObjectId } from '../../../../app/src/infrastructure/mongodb.js'
 import { hashSecret } from './SecretsHelper.js'
 
 const PERSONAL_ACCESS_TOKEN_PREFIX = 'olpat_'
@@ -68,7 +68,7 @@ async function getUserTokens(userId) {
  */
 async function deleteToken(userId, tokenId) {
   const result = await db.oauthAccessTokens.deleteOne({
-    _id: tokenId,
+    _id: new ObjectId(tokenId),
     user_id: userId,
     type: 'personal',
   })
