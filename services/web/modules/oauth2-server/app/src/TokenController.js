@@ -2,6 +2,20 @@ import Oauth2Server from './Oauth2Server.js'
 import logger from '@overleaf/logger'
 
 /**
+ * Extract bearer token from Authorization header
+ * @param {string} authHeader - The Authorization header value
+ * @returns {string|null} The token or null if invalid format
+ */
+function extractBearerToken(authHeader) {
+  if (!authHeader) {
+    return null
+  }
+  
+  const match = authHeader.match(/^Bearer\s+(.+)$/i)
+  return match ? match[1] : null
+}
+
+/**
  * Check if an OAuth token is valid
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -16,12 +30,11 @@ async function checkOAuthToken(req, res) {
       })
     }
     
-    // Extract token from "Bearer <token>" format
-    const token = authHeader.replace(/^Bearer\s+/i, '')
+    const token = extractBearerToken(authHeader)
     
     if (!token) {
       return res.status(401).json({
-        error: 'No token provided',
+        error: 'Invalid authorization header format. Expected: Bearer <token>',
       })
     }
     
@@ -68,11 +81,11 @@ async function getTokenInfo(req, res) {
       })
     }
     
-    const token = authHeader.replace(/^Bearer\s+/i, '')
+    const token = extractBearerToken(authHeader)
     
     if (!token) {
       return res.status(401).json({
-        error: 'No token provided',
+        error: 'Invalid authorization header format. Expected: Bearer <token>',
       })
     }
     
