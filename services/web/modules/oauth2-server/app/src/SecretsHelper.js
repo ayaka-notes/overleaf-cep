@@ -36,13 +36,18 @@ export function generateToken(length = 32) {
 }
 
 /**
+ * Length of partial token for display purposes
+ */
+const PARTIAL_TOKEN_LENGTH = 8
+
+/**
  * Create a partial token for display purposes (first 8 characters)
  * @param {string} token - The full token
  * @returns {string} The partial token
  */
 export function createPartialToken(token) {
-  if (!token || token.length < 8) {
+  if (!token || token.length < PARTIAL_TOKEN_LENGTH) {
     return token
   }
-  return token.substring(0, 8)
+  return token.substring(0, PARTIAL_TOKEN_LENGTH)
 }

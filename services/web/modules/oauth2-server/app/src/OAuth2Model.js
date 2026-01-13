@@ -3,7 +3,6 @@ import { OauthAccessToken } from '../../../../app/src/models/OauthAccessToken.js
 import { OauthAuthorizationCode } from '../../../../app/src/models/OauthAuthorizationCode.js'
 import { User } from '../../../../app/src/models/User.js'
 import { hashSecret, verifySecret } from './SecretsHelper.js'
-import crypto from 'node:crypto'
 
 /**
  * OAuth2 Model implementation for @node-oauth/oauth2-server
